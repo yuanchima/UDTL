@@ -17,17 +17,24 @@ args = None
 def parse_args():
     parser = argparse.ArgumentParser(description='Train')
     # model and data parameters
-    parser.add_argument('--model_name', type=str, default='cnn_features_1d', help='the name of the model')
-    parser.add_argument('--data_name', type=str, default='PHMFFT', help='the name of the data')
-    parser.add_argument('--data_dir', type=str, default='D:\Data\PHM2009gearbox\PHM_Society_2009_Competition_Expanded_txt', help='the directory of the data')
-    parser.add_argument('--transfer_task', type=list, default=[[0], [3]], help='transfer learning tasks')
+    parser.add_argument('--model_name', type=str, default='resnet_features_1d', help='the name of the model')
+    parser.add_argument('--data_name', type=str, default='XJTUFFT', help='the name of the data')
+    parser.add_argument('--data_dir', type=str, 
+                        default=r'D:\temp\vibration_datasets\datasets\XJTU-SY_Bearing_Datasets', 
+                        help='the directory of the data')
+    parser.add_argument('--transfer_task', type=list, default=[[0,1], [2]], help='transfer learning tasks')
+    parser.add_argument('--task_type', type=str, choices=['multi_class', 'multi_label'], default='multi_label', 
+                        help='the type of the classification task')
     parser.add_argument('--normlizetype', type=str, default='mean-std', help='nomalization type')
+
+    # multi-label classification parameters
+    parser.add_argument('--threshold', type=float, default=0.5, help='the threshold for multi-label classification')
 
     # training parameters
     parser.add_argument('--cuda_device', type=str, default='0', help='assign device')
     parser.add_argument('--checkpoint_dir', type=str, default='./checkpoint', help='the directory to save the model')
     parser.add_argument("--pretrained", type=bool, default=False, help='whether to load the pretrained model')
-    parser.add_argument('--batch_size', type=int, default=64, help='batchsize of the training process')
+    parser.add_argument('--batch_size', type=int, default=512, help='batchsize of the training process')
     parser.add_argument('--num_workers', type=int, default=0, help='the number of training process')
 
     parser.add_argument('--bottleneck', type=bool, default=True, help='whether using the bottleneck layer')
@@ -36,12 +43,12 @@ def parse_args():
 
     #
     parser.add_argument('--distance_metric', type=bool, default=False, help='whether use distance metric')
-    parser.add_argument('--distance_loss', type=str, choices=['MK-MMD', 'JMMD', 'CORAL'], default='MK-MMD', help='which distance loss you use')
+    parser.add_argument('--distance_loss', type=str, choices=['MK-MMD', 'JMMD', 'CORAL'], default='CORAL', help='which distance loss you use')
     parser.add_argument('--trade_off_distance', type=str, default='Step', help='')
     parser.add_argument('--lam_distance', type=float, default=1, help='this is used for Cons')
     #
     parser.add_argument('--domain_adversarial', type=bool, default=True, help='whether use domain_adversarial')
-    parser.add_argument('--adversarial_loss', type=str, choices=['DA', 'CDA', 'CDA+E'], default='CDA+E', help='which adversarial loss you use')
+    parser.add_argument('--adversarial_loss', type=str, choices=['DA', 'CDA', 'CDA+E'], default='DA', help='which adversarial loss you use')
     parser.add_argument('--hidden_size', type=int, default=1024, help='whether using the last batch')
     parser.add_argument('--trade_off_adversarial', type=str, default='Step', help='')
     parser.add_argument('--lam_adversarial', type=float, default=1, help='this is used for Cons')
@@ -58,7 +65,7 @@ def parse_args():
     # save, load and display information
     parser.add_argument('--middle_epoch', type=int, default=50, help='max number of epoch')
     parser.add_argument('--max_epoch', type=int, default=300, help='max number of epoch')
-    parser.add_argument('--print_step', type=int, default=50, help='the interval of log training information')
+    parser.add_argument('--print_step', type=int, default=5, help='the interval of log training information')
 
     args = parser.parse_args()
     return args

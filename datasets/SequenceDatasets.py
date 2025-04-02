@@ -38,5 +38,7 @@ class dataset(Dataset):
             seq = self.seq_data[item]
             label = self.labels[item]
             seq = self.transforms(seq)
+            if isinstance(label, list):
+                label = torch.tensor(label, dtype=torch.float)
             return seq, label
 

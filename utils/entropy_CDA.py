@@ -6,7 +6,7 @@ def calc_coeff(iter_num,max_iter):
     alpha = 10
     low = 0.0
     high = 1.0
-    return np.float(2.0 * (high - low) / (1.0 + np.exp(-alpha * iter_num / max_iter)) - (high - low) + low)
+    return float(2.0 * (high - low) / (1.0 + np.exp(-alpha * iter_num / max_iter)) - (high - low) + low)
 
 def grl_hook(coeff):
     def fun1(grad):

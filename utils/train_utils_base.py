@@ -152,7 +152,10 @@ class train_utils(object):
                     if args.adabn:
                         torch.save(self.model.module.state_dict() if self.device_count > 1 else self.model.state_dict(),
                                    os.path.join(self.save_dir, 'model_temp.pth'))
-                        self.model_eval.load_state_dict(torch.load(os.path.join(self.save_dir, 'model_temp.pth')))
+                        if self.device_count == 1:
+                            self.model_eval.load_state_dict(torch.load(os.path.join(self.save_dir, 'model_temp.pth')))
+                        else:
+                            self.model_eval.module.load_state_dict(torch.load(os.path.join(self.save_dir, 'model_temp.pth')))
                         self.model_eval.train()
                         self.model_eval.apply(apply_dropout)
                         with torch.set_grad_enabled(False):

@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from datasets.SequenceDatasets import dataset
 from datasets.sequence_aug import *
 from tqdm import tqdm
+import zipfile
 
 
 signal_size = 1024
@@ -38,7 +39,12 @@ def get_files(root, N):
         state1 = WC[N[k]]  # WC[0] can be changed to different working states
         for i in tqdm(range(len(Case1))):
             root1 = os.path.join("/tmp",root,Case1[i],Case1[i]+"_"+state1)
-            datalist1 = os.listdir(root1)
+            try:
+                datalist1 = os.listdir(root1)
+            except FileNotFoundError:
+                with zipfile.ZipFile(f'{root1}.zip', 'r') as zip_ref:
+                    zip_ref.extractall(f'{root1}')
+                    datalist1 = os.listdir(root1)
             path1=os.path.join('/tmp',root1,datalist1[0])
             data1, lab1 = data_load(path1,label=label1[i])
             data += data1

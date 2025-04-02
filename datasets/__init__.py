@@ -22,5 +22,11 @@ from datasets.SEUFFT import Md as SEUFFT
 from datasets.PHM import PHM
 from datasets.PHMFFT import PHMFFT
 
+from datasets.GRCGH import GRCGH
+from datasets.GRCGHFFT import GRCGHFFT
+
+from datasets.XJTU import XJTU
+from datasets.XJTUFFT import XJTUFFT
+
 
 

@@ -68,35 +68,35 @@ def data_load(filename, label):
     axisname:Select which channel's data,---->"_DE_time","_FE_time","_BA_time"
     '''
     #--------------------
-    f = open(filename, "r", encoding='gb18030', errors='ignore')
-    fl = []
-    if  "ball_20_0.csv" in filename:
-        for line in islice(f, 16, None):  # Skip the first 16 lines
-            line = line.rstrip()
-            word = line.split(",", 8)  # Separated by commas
-            fl.append(eval(word[1]))  # Take a vibration signal in the x direction as input
-    else:
-        for line in islice(f, 16, None):  # Skip the first 16 lines
-            line = line.rstrip()
-            word = line.split("\t", 8)  # Separated by \t
-            fl.append(eval(word[1]))  # Take a vibration signal in the x direction as input
-    #--------------------
-    fl = np.array(fl)
-    fl = fl.reshape(-1, )
-    #print(fl.shape())
-    data = []
-    lab = []
-    start, end = int(fl.shape[0]/2), int(fl.shape[0]/2)+signal_size
-    while end<=(int(fl.shape[0]/2)+int(fl.shape[0]/3)):
-        x = fl[start:end]
-        x = np.fft.fft(x)
-        x = np.abs(x) / len(x)
-        x = x[range(int(x.shape[0] / 2))]
-        x = x.reshape(-1,1)
-        data.append(x)
-        lab.append(label)
-        start +=signal_size
-        end +=signal_size
+    with open(filename, "r", encoding='gb18030', errors='ignore') as f:
+        fl = []
+        if  "ball_20_0.csv" in filename:
+            for line in islice(f, 16, None):  # Skip the first 16 lines
+                line = line.rstrip()
+                word = line.split(",", 8)  # Separated by commas
+                fl.append(eval(word[1]))  # Take a vibration signal in the x direction as input
+        else:
+            for line in islice(f, 16, None):  # Skip the first 16 lines
+                line = line.rstrip()
+                word = line.split("\t", 8)  # Separated by \t
+                fl.append(eval(word[1]))  # Take a vibration signal in the x direction as input
+        #--------------------
+        fl = np.array(fl)
+        fl = fl.reshape(-1, )
+        #print(fl.shape())
+        data = []
+        lab = []
+        start, end = int(fl.shape[0]/2), int(fl.shape[0]/2)+signal_size
+        while end<=(int(fl.shape[0]/2)+int(fl.shape[0]/3)):
+            x = fl[start:end]
+            x = np.fft.fft(x)
+            x = np.abs(x) / len(x)
+            x = x[range(int(x.shape[0] / 2))]
+            x = x.reshape(-1,1)
+            data.append(x)
+            lab.append(label)
+            start +=signal_size
+            end +=signal_size
     return data, lab
 
 #--------------------------------------------------------------------------------------------------------------------

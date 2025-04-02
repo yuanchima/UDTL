@@ -24,7 +24,6 @@ class Retype(object):
     def __call__(self, seq):
         return seq.astype(np.float32)
 
-
 class AddGaussian(object):
     def __init__(self, sigma=0.01):
         self.sigma = sigma

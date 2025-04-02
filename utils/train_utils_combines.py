@@ -18,6 +18,10 @@ from loss.CORAL import CORAL
 from utils.entropy_CDA import Entropy
 from utils.entropy_CDA import calc_coeff
 from utils.entropy_CDA import grl_hook
+
+from loss.focal_loss import FocalLoss
+
+
 class train_utils(object):
     def __init__(self, args, save_dir):
         self.args = args
@@ -198,7 +202,10 @@ class train_utils(object):
         else:
             self.adversarial_loss = None
 
-        self.criterion = nn.CrossEntropyLoss()
+        if args.task_type == 'multi_label':
+            self.criterion = FocalLoss(gamma=2.0, alpha=0.25, num_classes=Dataset.num_classes, task_type='multi-label')
+        else:
+            self.criterion = nn.CrossEntropyLoss()
 
 
     def train(self):
@@ -217,7 +224,7 @@ class train_utils(object):
 
         iter_num = 0
         for epoch in range(self.start_epoch, args.max_epoch):
-            logging.info('-'*5 + 'Epoch {}/{}'.format(epoch, args.max_epoch - 1) + '-'*5)
+            logging.info('-'*5 + 'Epoch {}/{}'.format(epoch + 1, args.max_epoch) + '-'*5)
             # Update the learning rate
             if self.lr_scheduler is not None:
                 # self.lr_scheduler.step(epoch)
@@ -231,7 +238,7 @@ class train_utils(object):
             for phase in ['source_train', 'source_val', 'target_val']:
                 # Define the temp variable
                 epoch_start = time.time()
-                epoch_acc = 0
+                epoch_acc = 0.0
                 epoch_loss = 0.0
                 epoch_length = 0
 
@@ -257,7 +264,7 @@ class train_utils(object):
                         labels = labels.to(self.device)
                     else:
                         source_inputs = inputs
-                        target_inputs, _ = iter_target.next()
+                        target_inputs, _ = next(iter_target)
                         inputs = torch.cat((source_inputs, target_inputs), dim=0)
                         inputs = inputs.to(self.device)
                         labels = labels.to(self.device)
@@ -368,8 +375,14 @@ class train_utils(object):
                             loss = classifier_loss + lam_distance * distance_loss + adversarial_loss
 
 
-                        pred = logits.argmax(dim=1)
-                        correct = torch.eq(pred, labels).float().sum().item()
+                        if args.task_type == 'multi_label':
+                            pred_binary = (logits >= args.threshold).float()
+                            correct_labels = (pred_binary == labels).float()
+                            exact_match = (correct_labels.sum(dim=1) == labels.size(1)).float()
+                            correct = exact_match.sum().item()
+                        else:
+                            pred = logits.argmax(dim=1)
+                            correct = torch.eq(pred, labels).float().sum().item()
                         loss_temp = loss.item() * labels.size(0)
                         epoch_loss += loss_temp
                         epoch_acc += correct
@@ -396,7 +409,7 @@ class train_utils(object):
                                 sample_per_sec = 1.0 * batch_count / train_time
                                 logging.info('Epoch: {} [{}/{}], Train Loss: {:.4f} Train Acc: {:.4f},'
                                              '{:.1f} examples/sec {:.2f} sec/batch'.format(
-                                    epoch, batch_idx * len(labels), len(self.dataloaders[phase].dataset),
+                                    epoch+1, batch_idx * len(labels), len(self.dataloaders[phase].dataset),
                                     batch_loss, batch_acc, sample_per_sec, batch_time
                                 ))
                                 batch_acc = 0
@@ -410,7 +423,7 @@ class train_utils(object):
                 epoch_acc = epoch_acc / epoch_length
 
                 logging.info('Epoch: {} {}-Loss: {:.4f} {}-Acc: {:.4f}, Cost {:.1f} sec'.format(
-                    epoch, phase, epoch_loss, phase, epoch_acc, time.time() - epoch_start
+                    epoch+1, phase, epoch_loss, phase, epoch_acc, time.time() - epoch_start
                 ))
                 # save the model
                 if phase == 'target_val':
@@ -419,7 +432,7 @@ class train_utils(object):
                     # save the best model according to the val accuracy
                     if (epoch_acc > best_acc or epoch > args.max_epoch-2) and (epoch > args.middle_epoch-1):
                         best_acc = epoch_acc
-                        logging.info("save best model epoch {}, acc {:.4f}".format(epoch, epoch_acc))
+                        logging.info("save best model epoch {}, acc {:.4f}".format(epoch+1, epoch_acc))
                         torch.save(model_state_dic,
                                    os.path.join(self.save_dir, '{}-{:.4f}-best_model.pth'.format(epoch, best_acc)))
 
