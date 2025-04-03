@@ -88,3 +88,7 @@ ENV/
 
 # PyCharm
 *.iws
+.idea/
+
+# VSCode
+.vscode/
