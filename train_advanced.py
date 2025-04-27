@@ -18,7 +18,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train')
     # model and data parameters
     parser.add_argument('--model_name', type=str, default='resnet_features_1d', help='the name of the model')
-    parser.add_argument('--data_name', type=str, default='XJTUFFT', help='the name of the data')
+    parser.add_argument('--data_name', type=str, default='GRCGHFFT', help='the name of the data')
     parser.add_argument('--data_dir', type=str, 
                         default=r'D:\temp\vibration_datasets\datasets\XJTU-SY_Bearing_Datasets', 
                         help='the directory of the data')
