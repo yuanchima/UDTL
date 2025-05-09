@@ -18,11 +18,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train')
     # model and data parameters
     parser.add_argument('--model_name', type=str, default='resnet_features_1d', help='the name of the model')
-    parser.add_argument('--data_name', type=str, default='GRCGHFFT', help='the name of the data')
+    parser.add_argument('--data_name', type=str, default='SEUFFT', help='the name of the data')
     parser.add_argument('--data_dir', type=str, 
-                        default=r'D:\temp\vibration_datasets\datasets\XJTU-SY_Bearing_Datasets', 
+                        default=r'D:\temp\vibration_datasets\datasets\SEU\Mechanical-datasets-master\gearbox', 
                         help='the directory of the data')
-    parser.add_argument('--transfer_task', type=list, default=[[0,1], [2]], help='transfer learning tasks')
+    parser.add_argument('--transfer_task', type=list, default=[[0], [1]], help='transfer learning tasks')
     parser.add_argument('--task_type', type=str, choices=['multi_class', 'multi_label'], default='multi_label', 
                         help='the type of the classification task')
     parser.add_argument('--normlizetype', type=str, default='mean-std', help='nomalization type')
@@ -64,7 +64,7 @@ def parse_args():
 
     # save, load and display information
     parser.add_argument('--middle_epoch', type=int, default=50, help='max number of epoch')
-    parser.add_argument('--max_epoch', type=int, default=300, help='max number of epoch')
+    parser.add_argument('--max_epoch', type=int, default=3, help='max number of epoch')
     parser.add_argument('--print_step', type=int, default=5, help='the interval of log training information')
 
     args = parser.parse_args()

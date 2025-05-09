@@ -92,3 +92,7 @@ ENV/
 
 # VSCode
 .vscode/
+
+*.svg
+*.csv
+

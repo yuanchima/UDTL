@@ -18,70 +18,95 @@ ADBdata = ['KA01','KA03','KA05','KA06','KA07','KA08','KA09','KI01','KI03','KI05'
 #3 Bearings with real damages caused by accelerated lifetime tests(14x)
 RDBdata = ['KA04','KA15','KA16','KA22','KA30','KB23','KB24','KB27','KI14','KI16','KI17','KI18','KI21']
 #RDBdata = ['KA16','KA22','KA30','KB23','KB27','KI14','KI17','KI18']
-label3=[i for i in range(len(RDBdata))]
+# label3=[i for i in range(len(RDBdata))]
+
+# 定义多标签编码映射
+bearing_labels = {
+    # 故障轴承（Faulty bearings） - 6个故障特征
+    'KA04': [1, 0, 1, 0, 1, 0],  # [疲劳点蚀, 塑性变形, 外圈, 内圈, 单点损伤, 分布式损伤]
+    'KA15': [0, 1, 1, 0, 1, 0],  
+    'KA16': [1, 0, 1, 0, 1, 0],
+    'KA22': [1, 0, 1, 0, 1, 0],
+    'KA30': [0, 1, 1, 0, 0, 1],
+    'KB23': [1, 0, 1, 1, 1, 0],  # 内外圈都标记为1
+    'KB24': [1, 0, 1, 1, 0, 1],
+    'KB27': [0, 1, 1, 1, 0, 1],
+    'KI14': [1, 0, 0, 1, 1, 0],
+    'KI16': [1, 0, 0, 1, 1, 0],
+    'KI17': [1, 0, 0, 1, 1, 0],
+    'KI18': [1, 0, 0, 1, 1, 0],
+    'KI21': [1, 0, 0, 1, 1, 0],
+    # 健康轴承 (Healthy bearings) - 所有故障特征为0
+    'K001': [0, 0, 0, 0, 0, 0],  # [疲劳点蚀, 塑性变形, 外圈, 内圈, 单点损伤, 分布式损伤]
+    'K002': [0, 0, 0, 0, 0, 0],
+    'K003': [0, 0, 0, 0, 0, 0],
+    'K004': [0, 0, 0, 0, 0, 0],
+    'K005': [0, 0, 0, 0, 0, 0],
+    'K006': [0, 0, 0, 0, 0, 0]
+}
 
 #working condition
 WC = ["N15_M07_F10","N09_M07_F10","N15_M01_F10","N15_M07_F04"]
 #state = WC[0] #WC[0] can be changed to different working states
-
-#generate Training Dataset and Testing Dataset
 def get_files(root, N):
     '''
     This function is used to generate the final training set and test set.
-    root:The location of the data set
+    root: The location of the data set
+    N: List of working conditions to use
     '''
     data = []
     lab = []
     for i in range(len(N)):
-        state = WC[N[i]]  # WC[0] can be changed to different working states
-        # for i in tqdm(range(len(HBdata))):
-        #     for w1 in range(20):
-        #         name1 = state+"_"+HBdata[i]+"_"+str(w1+1)
-        #         path1=os.path.join('/tmp',root,HBdata[i],name1+".mat")        #_1----->1 can be replaced by the number between 1 and 20
-        #         data1, lab1 = data_load(path1,name=name1,label=label1[i])
-        #         data += data1
-        #         lab  += lab1
-        #
-        # for j in tqdm(range(len(ADBdata))):
-        #     for w2 in range(20):
-        #         name2 = state+"_"+ADBdata[j]+"_"+str(w2+1)
-        #         path2=os.path.join('/tmp',root,ADBdata[j],name2+".mat")
-        #         data2,lab2 = data_load(path2,name=name2,label=label2[j])
-        #         data += data2
-        #         lab += lab2
+        state = WC[N[i]]  # Get current working condition
 
-        for k in tqdm(range(len(RDBdata))):
-            for w3 in range(1):
-                name3 = state+"_"+RDBdata[k]+"_"+str(w3+1)
-                path3=os.path.join('/tmp',root,RDBdata[k],name3+".mat")
-                data3, lab3= data_load(path3,name=name3,label=label3[k])
+        # Load healthy bearing data
+        for bearing_code in tqdm(HBdata, desc='Loading healthy bearings'):
+            for w1 in range(20):
+                name = f"{state}_{bearing_code}_{w1+1}"
+                path = os.path.join('/tmp', root, bearing_code, f"{name}.mat")
+                data1, lab1 = data_load(path, name=name, bearing_code=bearing_code)
+                data += data1
+                lab += lab1
+
+        # Load real damaged bearing data
+        for bearing_code in tqdm(RDBdata, desc='Loading damaged bearings'):
+            for w3 in range(20):
+                name = f"{state}_{bearing_code}_{w3+1}"
+                path = os.path.join('/tmp', root, bearing_code, f"{name}.mat")
+                data3, lab3 = data_load(path, name=name, bearing_code=bearing_code)
                 data += data3
                 lab += lab3
 
-    return [data,lab]
+    return [data, lab]
 
-def data_load(filename,name,label):
+def data_load(filename, name, bearing_code):
     '''
     This function is mainly used to generate test data and training data.
-    filename:Data location
+    filename: Data location
+    name: File name
+    bearing_code: Bearing code for label lookup
     '''
     fl = loadmat(filename)[name]
-    fl = fl[0][0][2][0][6][2]  #Take out the data
+    fl = fl[0][0][2][0][6][2]  # Take out the data
     fl = fl.reshape(-1,1)
-    data=[] 
-    lab=[]
-    start,end=0,signal_size
-    while end<=fl.shape[0]:
+    data = []
+    lab = []
+    start, end = 0, signal_size
+    
+    # Get the multi-label for this bearing from bearing_labels dictionary
+    label = bearing_labels[bearing_code]
+    
+    while end <= fl.shape[0]:
         data.append(fl[start:end])
         lab.append(label)
-        start +=signal_size
-        end +=signal_size
+        start += signal_size
+        end += signal_size
 
     return data, lab
 
 #--------------------------------------------------------------------------------------------------------------------
 class PU(object):
-    num_classes = len(RDBdata)
+    num_classes = 6
     inputchannel = 1
 
     def __init__(self, data_dir, transfer_task, normlizetype="0-1"):

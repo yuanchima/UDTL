@@ -203,7 +203,7 @@ class train_utils(object):
             self.adversarial_loss = None
 
         if args.task_type == 'multi_label':
-            self.criterion = FocalLoss(gamma=2.0, alpha=0.25, num_classes=Dataset.num_classes, task_type='multi-label')
+            self.criterion = FocalLoss(gamma=1.2, alpha=0.25, num_classes=Dataset.num_classes, task_type='multi-label')
         else:
             self.criterion = nn.CrossEntropyLoss()
 
@@ -377,9 +377,22 @@ class train_utils(object):
 
                         if args.task_type == 'multi_label':
                             pred_binary = (logits >= args.threshold).float()
-                            correct_labels = (pred_binary == labels).float()
-                            exact_match = (correct_labels.sum(dim=1) == labels.size(1)).float()
-                            correct = exact_match.sum().item()
+                            
+                            if args.metric_type == 'exact_match':
+                                # Original exact match metric
+                                correct_labels = (pred_binary == labels).float()
+                                exact_match = (correct_labels.sum(dim=1) == labels.size(1)).float()
+                                correct = exact_match.sum().item()
+                            
+                            elif args.metric_type == 'jaccard':
+                                # Jaccard similarity metric
+                                intersection = (pred_binary * labels).sum(dim=1)
+                                union = (pred_binary + labels).gt(0).float().sum(dim=1)
+                                jaccard = (intersection / (union + 1e-6))  # Add small epsilon to avoid division by zero
+                                correct = jaccard.sum().item()
+                            
+                            else:
+                                raise ValueError("metric_type must be either 'exact_match' or 'jaccard'")
                         else:
                             pred = logits.argmax(dim=1)
                             correct = torch.eq(pred, labels).float().sum().item()
@@ -430,11 +443,11 @@ class train_utils(object):
                     # save the checkpoint for other learning
                     model_state_dic = self.model_all.state_dict()
                     # save the best model according to the val accuracy
-                    if (epoch_acc > best_acc or epoch > args.max_epoch-2) and (epoch > args.middle_epoch-1):
+                    if (epoch_acc > best_acc):
                         best_acc = epoch_acc
                         logging.info("save best model epoch {}, acc {:.4f}".format(epoch+1, epoch_acc))
-                        torch.save(model_state_dic,
-                                   os.path.join(self.save_dir, '{}-{:.4f}-best_model.pth'.format(epoch, best_acc)))
+                        # torch.save(model_state_dic,
+                        #            os.path.join(self.save_dir, '{}-{:.4f}-best_model.pth'.format(epoch, best_acc)))
 
 
             if self.lr_scheduler is not None:
