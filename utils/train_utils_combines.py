@@ -385,11 +385,10 @@ class train_utils(object):
                                 correct = exact_match.sum().item()
                             
                             elif args.metric_type == 'jaccard':
-                                # Jaccard similarity metric
-                                intersection = (pred_binary * labels).sum(dim=1)
-                                union = (pred_binary + labels).gt(0).float().sum(dim=1)
-                                jaccard = (intersection / (union + 1e-6))  # Add small epsilon to avoid division by zero
-                                correct = jaccard.sum().item()
+                                # Calculate accuracy as number of correct predictions divided by total positions
+                                correct_predictions = (pred_binary == labels).float()
+                                accuracy = correct_predictions.mean(dim=1)
+                                correct = accuracy.sum().item()
                             
                             else:
                                 raise ValueError("metric_type must be either 'exact_match' or 'jaccard'")
